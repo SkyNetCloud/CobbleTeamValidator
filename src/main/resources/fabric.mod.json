@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "id": "cobbleteamvalidator",
+  "version": "${version}",
+  "name": "CobbleTeamValidator",
+  "description": "Nether Roof Nerf",
+  "authors": [],
+  "contact": {},
+  "license": "All-Rights-Reserved",
+  "icon": "assets/cobbleteamvalidator/icon.png",
+  "environment": "*",
+  "entrypoints": {
+    "client": [
+      "ca.skynetcloud.cobbleteamvalidator.client.CobbleteamvalidatorClient"
+    ],
+    "main": [
+      "ca.skynetcloud.cobbleteamvalidator.Cobbleteamvalidator"
+    ]
+  },
+  "depends": {
+    "fabricloader": ">=${loader_version}",
+    "fabric": "*",
+    "minecraft": "${minecraft_version}"
+  }
+}
