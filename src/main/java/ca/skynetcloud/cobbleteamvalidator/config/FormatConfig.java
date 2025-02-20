@@ -19,7 +19,7 @@ public class FormatConfig {
 
     public static void fetchFormats() {
         try {
-            String rawData = downloadFromUrl(SHOWDOWN_URL);
+            String rawData = downloadFromUrl();
             if (rawData == null) {
                 LogUtils.getLogger().error("Failed to download format data.");
                 return;
@@ -96,8 +96,8 @@ public class FormatConfig {
         return formatName.replaceAll("[^a-zA-Z0-9]", "").toLowerCase();
     }
 
-    private static String downloadFromUrl(String urlString) throws IOException {
-        HttpURLConnection connection = (HttpURLConnection) new URL(urlString).openConnection();
+    private static String downloadFromUrl() throws IOException {
+        HttpURLConnection connection = (HttpURLConnection) new URL(FormatConfig.SHOWDOWN_URL).openConnection();
         connection.setRequestMethod("GET");
         connection.setRequestProperty("User-Agent", "Mozilla/5.0");
         connection.setConnectTimeout(5000);
