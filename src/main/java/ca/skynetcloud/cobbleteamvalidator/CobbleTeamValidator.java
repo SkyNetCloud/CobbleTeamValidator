@@ -3,6 +3,8 @@ package ca.skynetcloud.cobbleteamvalidator;
 import ca.skynetcloud.cobbleteamvalidator.commands.FormatCommand;
 import ca.skynetcloud.cobbleteamvalidator.commands.ValidatorCommand;
 import ca.skynetcloud.cobbleteamvalidator.config.FormatConfig;
+import com.cobblemon.mod.common.battles.runner.ShowdownService;
+import com.cobblemon.mod.common.battles.runner.graal.GraalShowdownService;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.kyori.adventure.text.minimessage.MiniMessage;
@@ -19,6 +21,7 @@ public class CobbleTeamValidator implements ModInitializer {
 
     @Override
     public void onInitialize() {
+
 
         CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> {
             ValidatorCommand.registerCommand(dispatcher);

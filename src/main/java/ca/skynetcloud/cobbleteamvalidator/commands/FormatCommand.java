@@ -1,23 +1,29 @@
 package ca.skynetcloud.cobbleteamvalidator.commands;
 
 import ca.skynetcloud.cobbleteamvalidator.config.FormatConfig;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import me.lucko.fabric.api.permissions.v0.Permissions;
+import net.kyori.adventure.platform.fabric.FabricServerAudiences;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.minecraft.server.command.CommandManager;
 import net.minecraft.server.command.ServerCommandSource;
+import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
-
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+
 import static ca.skynetcloud.cobbleteamvalidator.CobbleTeamValidator.*;
 import static ca.skynetcloud.cobbleteamvalidator.config.FormatConfig.formatsData;
 
 public class FormatCommand {
-    private static final int FORMATS_PER_PAGE = 5;
+    private static final int FORMATS_PER_PAGE = 10;
+    private static FabricServerAudiences audiences;
 
     public static void register(CommandDispatcher<ServerCommandSource> dispatcher) {
         dispatcher.register(CommandManager.literal("listformats")
@@ -33,35 +39,57 @@ public class FormatCommand {
         try {
             Set<String> formatNamesSet = formatsData.keySet();
             List<String> formatNames = new ArrayList<>(formatNamesSet); // Convert to a list for indexing
-
             int totalFormats = formatNames.size();
             int totalPages = (int) Math.ceil((double) totalFormats / FORMATS_PER_PAGE);
 
             if (page > totalPages || page < 1) {
-                context.getSource().sendFeedback(() -> Text.literal("Invalid page number. There are " + totalPages + " pages."), false);
+                sendMiniMessage(context.getSource(), "<red>Invalid page number. There are " + totalPages + " pages.</red>");
                 return 0;
             }
 
             int start = (page - 1) * FORMATS_PER_PAGE;
             int end = Math.min(start + FORMATS_PER_PAGE, totalFormats);
 
-            StringBuilder formatsList = new StringBuilder("Available formats (Page " + page + "/" + totalPages + "):\n");
+            StringBuilder formatsList = new StringBuilder("<gold>Available formats (Page " + page + "/" + totalPages + "):</gold>\n");
             for (int i = start; i < end; i++) {
-                formatsList.append("- ").append(formatNames.get(i)).append("\n");
+                String formatKey = formatNames.get(i);
+                String originalName = getOriginalName(formatKey);
+                formatsList.append("<green>- ").append(formatKey).append(" (").append(originalName).append(")</green>\n");
             }
 
             if (page < totalPages) {
-                formatsList.append("\nType /listformats ").append(page + 1).append(" to see the next page.");
+                formatsList.append("\n<yellow>Type /listformats ").append(page + 1).append(" to see the next page.</yellow>");
             }
 
-            context.getSource().sendFeedback(() -> Text.literal(formatsList.toString()), false);
+
+            sendMiniMessage(context.getSource(), formatsList.toString());
             return 1;
 
         } catch (Exception e) {
             LOGGER.error("Error while listing formats: " + e.getMessage(), e);
-            context.getSource().sendFeedback(() -> Text.literal("An error occurred while fetching formats."), false);
+            sendMiniMessage(context.getSource(), "<red>An error occurred while fetching formats.</red>");
             return 0;
         }
     }
-}
 
+    private static void sendMiniMessage(ServerCommandSource source, String message) {
+        ServerPlayerEntity player = source.getPlayer();
+        if (player != null) {
+            FabricServerAudiences audiences = FabricServerAudiences.of(source.getServer());
+            Component component = miniMessage.deserialize(message);
+            audiences.players().sendMessage(component);
+        }
+    }
+
+
+    private static String getOriginalName(String formatKey) {
+        JsonElement element = formatsData.get(formatKey);
+        if (element != null && element.isJsonObject()) {
+            JsonObject formatObject = element.getAsJsonObject();
+            if (formatObject.has("original")) {
+                return formatObject.get("original").getAsString();
+            }
+        }
+        return formatKey; // Fallback if "originalName" is missing
+    }
+}
