@@ -17,7 +17,7 @@ import static ca.skynetcloud.cobbleteamvalidator.CobbleTeamValidator.*;
 import static ca.skynetcloud.cobbleteamvalidator.config.FormatConfig.formatsData;
 
 public class FormatCommand {
-    private static final int FORMATS_PER_PAGE = 5; // Change this number to adjust how many formats per page
+    private static final int FORMATS_PER_PAGE = 5;
 
     public static void register(CommandDispatcher<ServerCommandSource> dispatcher) {
         dispatcher.register(CommandManager.literal("listformats")
@@ -37,23 +37,19 @@ public class FormatCommand {
             int totalFormats = formatNames.size();
             int totalPages = (int) Math.ceil((double) totalFormats / FORMATS_PER_PAGE);
 
-            // Ensure the requested page is within range
             if (page > totalPages || page < 1) {
                 context.getSource().sendFeedback(() -> Text.literal("Invalid page number. There are " + totalPages + " pages."), false);
                 return 0;
             }
 
-            // Calculate the start and end indices for the current page
             int start = (page - 1) * FORMATS_PER_PAGE;
             int end = Math.min(start + FORMATS_PER_PAGE, totalFormats);
 
-            // Build the paginated list
             StringBuilder formatsList = new StringBuilder("Available formats (Page " + page + "/" + totalPages + "):\n");
             for (int i = start; i < end; i++) {
                 formatsList.append("- ").append(formatNames.get(i)).append("\n");
             }
 
-            // Add page navigation instructions
             if (page < totalPages) {
                 formatsList.append("\nType /listformats ").append(page + 1).append(" to see the next page.");
             }
