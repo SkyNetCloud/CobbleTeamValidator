@@ -1,24 +1,22 @@
 package ca.skynetcloud.cobbleteamvalidator.commands;
 
-import ca.skynetcloud.cobbleteamvalidator.config.FormatConfig;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.context.CommandContext;
-import me.lucko.fabric.api.permissions.v0.Permissions;
 import net.kyori.adventure.platform.fabric.FabricServerAudiences;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.minecraft.server.command.CommandManager;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.text.Text;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-import static ca.skynetcloud.cobbleteamvalidator.CobbleTeamValidator.*;
+import static ca.skynetcloud.cobbleteamvalidator.CobbleTeamValidator.LOGGER;
+import static ca.skynetcloud.cobbleteamvalidator.CobbleTeamValidator.miniMessage;
 import static ca.skynetcloud.cobbleteamvalidator.config.FormatConfig.formatsData;
 
 public class FormatCommand {
