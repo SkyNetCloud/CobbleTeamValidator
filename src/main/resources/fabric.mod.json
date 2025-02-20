@@ -10,11 +10,8 @@
   "icon": "assets/cobbleteamvalidator/icon.png",
   "environment": "*",
   "entrypoints": {
-    "client": [
-      "ca.skynetcloud.cobbleteamvalidator.client.CobbleteamvalidatorClient"
-    ],
     "main": [
-      "ca.skynetcloud.cobbleteamvalidator.Cobbleteamvalidator"
+      "ca.skynetcloud.cobbleteamvalidator.CobbleTeamValidator"
     ]
   },
   "depends": {

@@ -1,6 +1,7 @@
 plugins {
     id 'fabric-loom' version '1.10-SNAPSHOT'
     id 'maven-publish'
+    id "org.jetbrains.kotlin.jvm" version "2.0.+"
 }
 
 version = project.mod_version
@@ -12,11 +13,19 @@ base {
 
 
 repositories {
-    // Add repositories to retrieve artifacts from in here.
-    // You should only use this when depending on other mods because
-    // Loom adds the essential maven repositories to download Minecraft and libraries from automatically.
-    // See https://docs.gradle.org/current/userguide/declaring_repositories.html
-    // for more information about repositories.
+    mavenCentral()
+    maven {
+        url "https://maven.nucleoid.xyz/"
+        name "Nucleoid"
+    }
+    maven { url = uri("https://oss.sonatype.org/content/repositories/releases") }
+    maven { url = uri("https://oss.sonatype.org/content/repositories/snapshots") }
+    maven {url = "https://maven.architectury.dev/" }
+
+    maven { url = 'https://jitpack.io' }
+    maven {
+        url ="https://maven.impactdev.net/repository/development/"
+    }
 }
 
 dependencies {
@@ -25,6 +34,17 @@ dependencies {
     mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
     modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
 
+    modImplementation("net.fabricmc:fabric-language-kotlin:1.11.0+kotlin.2.0.0")
+
+    modImplementation include("net.kyori:adventure-platform-fabric:5.14.1")
+    modImplementation "net.kyori:adventure-text-minimessage:4.17.0"
+    modImplementation "net.kyori:adventure-text-serializer-gson:4.17.0"
+    modImplementation "net.kyori:adventure-api:4.17.0"
+
+
+
+    modImplementation "com.cobblemon:fabric:1.6.1+1.21.1"
+    modImplementation 'me.lucko:fabric-permissions-api:0.3.1'
     modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
 }
 

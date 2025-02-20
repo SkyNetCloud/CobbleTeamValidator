@@ -1,80 +1,150 @@
-package ca.skynetcloud.cobbleteamvalidator.utils;
+package ca.skynetcloud.cobbleteamvalidator.config;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.InputStreamReader;
-import java.io.IOException;
+import ca.skynetcloud.cobbleteamvalidator.CobbleTeamValidator;
+import com.google.gson.*;
+import com.mojang.logging.LogUtils;
+import org.jetbrains.annotations.NotNull;
+
+import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.nio.file.Path;
-
-import com.google.gson.Gson;
-import com.google.gson.JsonSyntaxException;
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 
 public class FormatConfig {
 
-    private static final String NAME = "CobbleTeamValidator";
-    private static final String CONFIG_PATH = "config/cobbleteamvalidator/formats.json";
-    private static final Gson GSON = new Gson();
-    private FormatConfigData config;
+    private static final String SHOWDOWN_URL = "https://play.pokemonshowdown.com/data/formats.js";
+    private static final File FORMATS_FILE = new File("config/cobblevalidator/formats.json");
+    public static JsonObject formatsData;
+    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
-    public void loadConfig() {
-        File configFile = new File(CONFIG_PATH);
-        configFile.getParentFile().mkdirs();
+    public static void fetchFormats() {
+        try {
+            String rawData = downloadFromUrl(SHOWDOWN_URL);
+            if (rawData == null) {
+                LogUtils.getLogger().error("Failed to download format data.");
+                return;
+            }
 
-        if (configFile.exists()) {
-            System.out.println(NAME + ": Config file exists. Loading it.");
+            String jsonData = rawData.replaceFirst("exports\\.Formats =", "").trim();
+            if (jsonData.endsWith(";")) {
+                jsonData = jsonData.substring(0, jsonData.length() - 1);
+            }
 
-            try (FileReader fileReader = new FileReader(configFile)) {
-                config = GSON.fromJson(fileReader, FormatConfigData.class);
+            JsonArray formatsArray = JsonParser.parseString(jsonData).getAsJsonArray();
+            JsonObject formattedData = formatToJsonObject(formatsArray);
 
-                if (config == null) {
-                    System.err.println("Loaded config is null. Resetting to default config.");
-                    config = new FormatConfigData();  // Fallback to default config
-                }
-            } catch (JsonSyntaxException e) {
-                System.err.println("Error reading config file. Using default config.");
-                e.printStackTrace();
-                config = new FormatConfigData();  // Fallback to default config
+            saveConfig(formattedData);
+            formatsData = formattedData;
+
+            LogUtils.getLogger().info("Pokémon Showdown format rules updated!");
+
+        } catch (Exception e) {
+            LogUtils.getLogger().error("Error fetching formats: " + e.getMessage());
+        }
+    }
+
+    private static @NotNull JsonObject formatToJsonObject(JsonArray formatsArray) {
+        JsonObject formattedData = new JsonObject();
+
+        for (JsonElement element : formatsArray) {
+            JsonObject formatObj = element.getAsJsonObject();
+            String formatName = getFormatName(formatObj);
+            String originalName = formatObj.has("name") ? formatObj.get("name").getAsString() : "unknown_format";
+            JsonObject formatData = extractFormatData(formatObj);
+
+            formatData.addProperty("original", originalName);
+            formatData.addProperty("generation", formatObj.has("mod") ? formatObj.get("mod").getAsString() : "unknown");
+
+            formattedData.add(formatName, formatData);
+        }
+        return formattedData;
+    }
+
+    private static String getFormatName(JsonObject formatObj) {
+        if (formatObj.has("name") && !formatObj.get("name").isJsonNull()) {
+            return normalizeFormatName(formatObj.get("name").getAsString());
+        }
+        return "unknown_format";
+    }
+
+    private static JsonObject extractFormatData(JsonObject formatObj) {
+        JsonObject formatData = new JsonObject();
+        JsonArray bannedPokemons = extractBannedPokemons(formatObj);
+        JsonArray rules = extractRules(formatObj);
+
+        formatData.add("banned_pokemon", bannedPokemons);
+        formatData.add("rules", rules);
+        return formatData;
+    }
+
+    private static JsonArray extractBannedPokemons(JsonObject formatObj) {
+        JsonArray bannedList = formatObj.has("banlist") ? formatObj.getAsJsonArray("banlist") : new JsonArray();
+        JsonArray bannedPokemons = new JsonArray();
+
+        for (JsonElement bannedPokemon : bannedList) {
+            bannedPokemons.add(bannedPokemon.getAsString().toLowerCase());
+        }
+
+        return bannedPokemons;
+    }
+
+    private static JsonArray extractRules(JsonObject formatObj) {
+        return formatObj.has("ruleset") ? formatObj.getAsJsonArray("ruleset") : new JsonArray();
+    }
+
+    private static String normalizeFormatName(String formatName) {
+        return formatName.replaceAll("[^a-zA-Z0-9]", "").toLowerCase();
+    }
+
+    private static String downloadFromUrl(String urlString) throws IOException {
+        HttpURLConnection connection = (HttpURLConnection) new URL(urlString).openConnection();
+        connection.setRequestMethod("GET");
+        connection.setRequestProperty("User-Agent", "Mozilla/5.0");
+        connection.setConnectTimeout(5000);
+        connection.setReadTimeout(5000);
+
+        if (connection.getResponseCode() != 200) {
+            return null;
+        }
+
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream(), StandardCharsets.UTF_8))) {
+            StringBuilder result = new StringBuilder();
+            String line;
+            while ((line = reader.readLine()) != null) {
+                result.append(line);
+            }
+            return result.toString();
+        }
+    }
+
+    private static void saveConfig(JsonObject data) {
+        try {
+            File directory = FORMATS_FILE.getParentFile();
+            if (!directory.exists()) {
+                directory.mkdirs();
+            }
+
+            try (FileWriter fileWriter = new FileWriter(FORMATS_FILE)) {
+                GSON.toJson(data, fileWriter);
+                fileWriter.flush();
+                LogUtils.getLogger().info(CobbleTeamValidator.NAME + ": Config saved successfully.");
+            }
+        } catch (IOException e) {
+            LogUtils.getLogger().error("Failed to save the config!", e);
+        }
+    }
+
+    public static void loadFormats() {
+        if (FORMATS_FILE.exists()) {
+            try (FileReader reader = new FileReader(FORMATS_FILE)) {
+                formatsData = JsonParser.parseReader(reader).getAsJsonObject();
+                LogUtils.getLogger().info("Formats loaded from file successfully!");
             } catch (IOException e) {
-                System.err.println("Error reading the config file.");
-                e.printStackTrace();
-                config = new FormatConfigData();  // Fallback to default config
+                LogUtils.getLogger().error("Failed to load formats from file: " + e.getMessage());
             }
         } else {
-            System.out.println(NAME + ": Config file not found. Creating a new one with default settings.");
-            config = new FormatConfigData();  // Create new default config
+            LogUtils.getLogger().error("No format file found, fetching formats...");
+            fetchFormats();
         }
-
-        saveConfig();  // Save the config if it was fresh or modified
-    }
-
-    private void saveConfig() {
-        try (FileWriter fileWriter = new FileWriter(CONFIG_PATH)) {
-            GSON.toJson(config, fileWriter);
-            fileWriter.flush();
-            System.out.println(NAME + ": Config saved successfully.");
-        } catch (IOException e) {
-            System.err.println("Failed to save the config!");
-            e.printStackTrace();
-        }
-    }
-
-    public void reloadConfig() {
-        System.out.println("Reloading config");
-        loadConfig();
-    }
-
-    // Placeholder for your FormatConfigData class
-    public static class FormatConfigData {
-
     }
 }
