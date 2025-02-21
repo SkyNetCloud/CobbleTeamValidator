@@ -12,6 +12,20 @@ base {
 }
 
 
+loom {
+    // mixin.defaultRefmapName = "hexcasting.mixins.refmap.json"
+    runs {
+        client {
+            client()
+            setConfigName('Fabric Client 1.21.1')
+            ideConfigGenerated(true)
+            runDir('run')
+            programArgs(["--username", "SkyNetCloud", "--uuid", "283502a2-4134-454c-bb47-39c3875b0dd4"])
+        }
+    }
+}
+
+
 repositories {
     mavenCentral()
     maven {

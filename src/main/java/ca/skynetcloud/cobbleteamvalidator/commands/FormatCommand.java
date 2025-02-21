@@ -21,7 +21,6 @@ import static ca.skynetcloud.cobbleteamvalidator.config.FormatConfig.formatsData
 
 public class FormatCommand {
     private static final int FORMATS_PER_PAGE = 10;
-    private static FabricServerAudiences audiences;
 
     public static void register(CommandDispatcher<ServerCommandSource> dispatcher) {
         dispatcher.register(CommandManager.literal("listformats")
@@ -48,19 +47,24 @@ public class FormatCommand {
             int start = (page - 1) * FORMATS_PER_PAGE;
             int end = Math.min(start + FORMATS_PER_PAGE, totalFormats);
 
+
+
             StringBuilder formatsList = new StringBuilder("<gold>Available formats (Page " + page + "/" + totalPages + "):</gold>\n");
             for (int i = start; i < end; i++) {
                 String formatKey = formatNames.get(i);
                 String originalName = getOriginalName(formatKey);
-                formatsList.append("<green>- ").append(formatKey).append(" (").append(originalName).append(")</green>\n");
+
+                // Only apply hover effect to the format name (not the whole line)
+                formatsList.append("<hover:show_text:'<#03c6fc>" + formatKey + "'>").append("<green>- ").append(originalName).append("</hover>\n");
             }
 
             if (page < totalPages) {
                 formatsList.append("\n<yellow>Type /listformats ").append(page + 1).append(" to see the next page.</yellow>");
+                formatsList.append("\n<#ADD8E6> Note that the formats names are there Showdown default names /validate [formats] \n uses converted name which are tab completable</#ADD8E6>");
             }
 
-
             sendMiniMessage(context.getSource(), formatsList.toString());
+
             return 1;
 
         } catch (Exception e) {
@@ -69,6 +73,7 @@ public class FormatCommand {
             return 0;
         }
     }
+
 
     private static void sendMiniMessage(ServerCommandSource source, String message) {
         ServerPlayerEntity player = source.getPlayer();

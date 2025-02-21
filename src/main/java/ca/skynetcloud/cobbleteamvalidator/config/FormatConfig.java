@@ -47,8 +47,14 @@ public class FormatConfig {
         JsonObject formattedData = new JsonObject();
 
         for (JsonElement element : formatsArray) {
+
             JsonObject formatObj = element.getAsJsonObject();
             String formatName = getFormatName(formatObj);
+
+            if ("unknown_format".equals(formatName)) {
+                continue;
+            }
+
             String originalName = formatObj.has("name") ? formatObj.get("name").getAsString() : "unknown_format";
             JsonObject formatData = extractFormatData(formatObj);
 

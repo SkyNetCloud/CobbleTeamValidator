@@ -5,6 +5,7 @@ import ca.skynetcloud.cobbleteamvalidator.commands.ValidatorCommand;
 import ca.skynetcloud.cobbleteamvalidator.config.FormatConfig;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,6 +19,15 @@ public class CobbleTeamValidator implements ModInitializer {
 
     @Override
     public void onInitialize() {
+
+
+        ServerLifecycleEvents.SERVER_STARTING.register(minecraftServer -> {
+            LOGGER.info(
+                    "Starting up %n by %authors %v".replace("%n", NAME).replace("%authors", "SkyNetCloud").replace("%v",
+                            "0.0.1"
+                    )
+            );
+        });
 
 
         CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> {
