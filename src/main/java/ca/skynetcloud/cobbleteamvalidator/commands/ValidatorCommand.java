@@ -44,6 +44,7 @@ public class ValidatorCommand {
     }
 
     private static int handleValidateCommand(ServerCommandSource source, String format) {
+        int result = Command.SINGLE_SUCCESS;
         PlayerPartyStore party = Cobblemon.INSTANCE.getStorage().getParty(Objects.requireNonNull(source.getPlayer()));
 
 
@@ -51,14 +52,13 @@ public class ValidatorCommand {
 
         if (count < 1 || count > 6) {
             sendMiniMessage(source, "<red>You must have between 1 and 6 Pokémon in your party to validate.</red>");
-            return Command.SINGLE_SUCCESS;
+        } else {
+            String validationMessage = validateTeamForFormat(format, party);
+            sendMiniMessage(source, validationMessage);
         }
 
 
-        String validationMessage = validateTeamForFormat(format, party);
-        sendMiniMessage(source, validationMessage);
-
-        return Command.SINGLE_SUCCESS;
+        return result;
     }
 
     private static void sendMiniMessage(ServerCommandSource source, String message) {
@@ -79,10 +79,10 @@ public class ValidatorCommand {
         String originalName = formatRules.has("original") ? formatRules.get("original").getAsString() : format;
 
         Set<String> bannedSet = new HashSet<>();
-        Pattern genPattern = Pattern.compile("\\[Gen (\\d+)\\]");
+        Pattern genPattern = Pattern.compile("\\[Gen (\\d+)]");
         Matcher matcher = genPattern.matcher(originalName);
 
-        int genNumber = 0;
+        int genNumber;
         if (matcher.find()) {
             genNumber = Integer.parseInt(matcher.group(1));
         } else {
@@ -117,8 +117,8 @@ public class ValidatorCommand {
 
         // Return result based on validation
         if (!bannedSet.isEmpty()) {
-            return "<red>Your team contains banned Pokémon: <newline>" + String.join(", ", bannedSet) +
-                    " (Not allowed in <blue>" + originalName + "</blue>).</red>";
+            return "<red>Your team contains Pokémon: <newline>" + String.join(", ", bannedSet) +
+                    "\n (Banned or doesn't exist in <blue>" + originalName + "</blue>).</red>";
         }
 
         return "<green>Your team is valid for the <blue>" + originalName + "</blue> format!</green>";
