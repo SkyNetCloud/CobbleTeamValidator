@@ -53,9 +53,17 @@ public class FormatCommand {
             for (int i = start; i < end; i++) {
                 String formatKey = formatNames.get(i);
                 String originalName = getOriginalName(formatKey);
+                String rulesText = getRulesText(formatKey); // Get formatted rules
 
-                // Only apply hover effect to the format name (not the whole line)
-                formatsList.append("<hover:show_text:'<#03c6fc>" + formatKey + "'>").append("<green>- ").append(originalName).append("</hover>\n");
+                // Build hover text
+                String hoverText = "<#03c6fc>" + formatKey;
+                if (!rulesText.isEmpty()) {
+                    hoverText += "\n<yellow>Rules:</yellow>\n" + rulesText;
+                }
+
+                // Apply hover effect only to the format name
+                formatsList.append("<hover:show_text:'").append(hoverText).append("'>")
+                        .append("<green>- ").append(originalName).append("</hover>\n");
             }
 
             if (page < totalPages) {
@@ -94,5 +102,20 @@ public class FormatCommand {
             }
         }
         return formatKey; // Fallback if "originalName" is missing
+    }
+
+    private static String getRulesText(String formatKey) {
+        JsonElement element = formatsData.get(formatKey);
+        if (element != null && element.isJsonObject()) {
+            JsonObject formatObject = element.getAsJsonObject();
+            if (formatObject.has("rules") && formatObject.get("rules").isJsonArray()) {
+                StringBuilder rulesList = new StringBuilder();
+                formatObject.get("rules").getAsJsonArray().forEach(rule ->
+                        rulesList.append("<gray>- ").append(rule.getAsString()).append("</gray>\n")
+                );
+                return rulesList.toString().trim();
+            }
+        }
+        return "";
     }
 }
